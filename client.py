@@ -53,10 +53,10 @@ class TSTransformerClient(Client):
 
         self.model.init_weights(lambda _x: nn.init.xavier_uniform_(_x))
 
-    def get_weights(self, get_weights_ins: GetWeightsInstructions) -> GetWeightsResult:
+    def get_weight(self, get_weights_ins: GetWeightsInstructions) -> GetWeightsResult:
         return self.model.get_weights()
 
-    def set_weights(self, set_weights_ins: SetWeightsInstructions) -> SetWeightsResult:
+    def set_weight(self, set_weights_ins: SetWeightsInstructions) -> SetWeightsResult:
         self.model.set_weights(set_weights_ins.weights)
 
     def train(self, train_ins: TrainInstructions) -> TrainResult:
