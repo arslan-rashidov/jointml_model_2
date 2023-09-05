@@ -120,6 +120,23 @@ class TSTransformerClient(Client):
 
             return test_loss
 
+    def get_prediction(self):
+        test_loss = 0.0
+
+        self.model.eval()
+        lossf = TimeSeriesBERTLoss()
+        predictions = []
+
+        with torch.no_grad():
+            for batch_id, data in enumerate(self.test_dataloader):
+                data = {key: value.to(self.device) for key, value in data.items()}
+                batch_size = data["input_series"].shape[0]
+                time_series_size = data["input_series"].shape[1]
+
+                pred_series = self.model(data["input_series"])
+                predictions += list(pred_series)
+
+            return predictions
 
 class TimeSeriesBERTLoss(nn.Module):
     """
