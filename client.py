@@ -94,7 +94,7 @@ class TSTransformerClient(Client):
 
             return train_loss
 
-    def evaluate(self, eval_ins: EvaluateInstructions) -> EvaluateResult:
+    def test(self, eval_ins: EvaluateInstructions) -> EvaluateResult:
         test_loss = 0.0
 
         self.model.eval()
