@@ -1,5 +1,3 @@
-
-
 class TimeSeriesBERTEmbedding(nn.Module):
     def __init__(self, embedding_size, time_series_max_len):
         super().__init__()

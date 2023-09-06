@@ -1,6 +1,3 @@
-
-
-
 class DatasetController:
     def __init__(
         self, file_path, lm, mask_prob, train_size, valid_size, test_size, train_dir, valid_dir, test_dir, rewrite=False
