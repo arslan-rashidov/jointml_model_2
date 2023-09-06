@@ -4,7 +4,13 @@ from torch import nn, optim
 from tsb_data import DatasetController, get_dataloaders
 from tsb_model import TimeSeriesBERTModel, TimeSeriesBERTModelForTraining
 
-dataset_parameters = {
+
+init_parameters = {
+    "time_series_size": 71,
+    "hidden_size": 128,
+    "encoder_layers_count": 4,
+    "heads_count": 6,
+    "dropout_prob": 0.1,
     "file_path": "dataset/customers_histories.csv",
     "lm": 3,
     "mask_prob": 0.15,
@@ -17,32 +23,39 @@ dataset_parameters = {
     "rewrite": True,
 }
 
-model_parameters = {
-        "time_series_size": 71,
-        "hidden_size": 128,
-        "encoder_layers_count": 4,
-        "heads_count": 6,
-        "dropout_prob": 0.1,
-    }
+train_parameters = {
+    "batch_size": 16,
+    "learning_rate": 0.0001,
+    "epoch_num": 20,
+    "k": 10,
+}
 
-trainer_parameters = {
-        "batch_size": 16,
-        "learning_rate": 0.0001,
-        "epoch_num": 20,
-        "k": 10,
-    }
 
 class Client:
-    def __init__(self, id: str, global_weights_save_folder_path: str = None, local_weights_save_folder_path: str = None):
-        tsb_model = TimeSeriesBERTModel(**model_parameters)
+    def __init__(self, id: str, global_weights_save_folder_path: str = None,
+                 local_weights_save_folder_path: str = None):
+        tsb_model = TimeSeriesBERTModel(time_series_size=init_parameters['time_series_size'],
+                                        hidden_size=init_parameters['hidden_size'],
+                                        encoder_layers_count=init_parameters['encoder_layers_count'],
+                                        heads_count=init_parameters['heads_count'],
+                                        dropout_prob=init_parameters['dropout_prob'])
         model = TimeSeriesBERTModelForTraining(tsb_model)
         super().__init__(id, model)
 
-        dataset_controller = DatasetController(**dataset_parameters)
+        dataset_controller = DatasetController(file_path=init_parameters['file_path'],
+                                               lm=init_parameters['lm'],
+                                               mask_prob=init_parameters['mask_prob'],
+                                               train_size=init_parameters['train_size'],
+                                               valid_size=init_parameters['valid_size'],
+                                               test_size=init_parameters['test_size'],
+                                               train_dir=init_parameters['train_dir'],
+                                               valid_dir=init_parameters['valid_dir'],
+                                               test_dir=init_parameters['test_dir'],
+                                               rewrite=init_parameters['rewrite'])
 
         train_dataset, valid_dataset, test_dataset = dataset_controller.get_sets()
         self.train_dataloader, self.valid_dataloader, self.test_dataloader = get_dataloaders(
-            batch_size=trainer_parameters["batch_size"],
+            batch_size=train_parameters["batch_size"],
             train_dataset=train_dataset,
             valid_dataset=valid_dataset,
             test_dataset=test_dataset,
@@ -57,10 +70,10 @@ class Client:
         self.model.set_weights(set_weights_ins.weights)
 
     def train(self, train_ins):
-        epochs_num = trainer_parameters['epochs_num']
+        epochs_num = train_parameters['epochs_num']
 
-        optimizer = optim.AdamW(self.model.parameters(), lr=trainer_parameters["learning_rate"])
-        lossf = TimeSeriesBERTLoss(k=trainer_parameters["k"])
+        optimizer = optim.AdamW(self.model.parameters(), lr=train_parameters["learning_rate"])
+        lossf = TimeSeriesBERTLoss(k=train_parameters["k"])
 
         for epoch in range(epochs_num):
             train_loss = 0.0
@@ -134,6 +147,7 @@ class Client:
                 predictions += list(pred_series)
 
             return predictions
+
 
 class TimeSeriesBERTLoss(nn.Module):
     """
