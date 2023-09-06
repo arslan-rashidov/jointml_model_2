@@ -1,11 +1,5 @@
-import torch
-from torch import nn, optim
-
-from federated_learning.core.client import Client
-from federated_learning.core.utils import EvaluateInstructions, EvaluateResult, TrainInstructions, TrainResult, \
-    SetWeightsInstructions, SetWeightsResult, GetWeightsInstructions, GetWeightsResult
-from federated_learning.examples.ts_transformer_fl.tsb_data import DatasetController, get_dataloaders
-from federated_learning.examples.ts_transformer_fl.tsb_model import TimeSeriesBERTModel, TimeSeriesBERTModelForTraining
+from tsb_data import DatasetController, get_dataloaders
+from tsb_model import TimeSeriesBERTModel, TimeSeriesBERTModelForTraining
 
 dataset_parameters = {
     "file_path": "dataset/customers_histories.csv",
