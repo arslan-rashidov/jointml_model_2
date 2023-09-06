@@ -189,13 +189,13 @@ class TimeSeriesBERTModel(nn.Module):
         for encoder_layer_index in range(len(self.encoder_layers)):
             self.encoder_layers[encoder_layer_index].init_weights(distribution_module)
 
-    def set_weights(self, weights: NDArrays):  # TODO: Specify type of weights and return type
+    def set_weights(self, weights):  # TODO: Specify type of weights and return type
         state_dict = OrderedDict(
             {k: torch.tensor(v) for k, v in zip(self.state_dict().keys(), weights)}
         )
         self.load_state_dict(state_dict, strict=True)
 
-    def get_weights(self) -> NDArrays:  # TODO: Specify return type
+    def get_weights(self):  # TODO: Specify return type
         return [val.cpu().numpy() for _, val in self.state_dict().items()]
 
 
@@ -221,11 +221,11 @@ class TimeSeriesBERTModelForTraining(nn.Module):
         distribution_module(self.output_layer.weight)
         self.tsb_model.init_weights(distribution_module)
 
-    def set_weights(self, weights: NDArrays):  # TODO: Specify type of weights and return type
+    def set_weights(self, weights):  # TODO: Specify type of weights and return type
         state_dict = OrderedDict(
             {k: torch.tensor(v) for k, v in zip(self.state_dict().keys(), weights)}
         )
         self.load_state_dict(state_dict, strict=True)
 
-    def get_weights(self) -> NDArrays:  # TODO: Specify return type
+    def get_weights(self):  # TODO: Specify return type
         return [val.cpu().numpy() for _, val in self.state_dict().items()]
