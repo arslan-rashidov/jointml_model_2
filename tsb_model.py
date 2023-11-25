@@ -1,6 +1,5 @@
 from collections import OrderedDict
 
-from federated_learning.core.utils import NDArrays
 from tsb_embedding import TimeSeriesBERTEmbedding
 
 import math
@@ -190,13 +189,13 @@ class TimeSeriesBERTModel(nn.Module):
         for encoder_layer_index in range(len(self.encoder_layers)):
             self.encoder_layers[encoder_layer_index].init_weights(distribution_module)
 
-    def set_weights(self, weights: NDArrays):  # TODO: Specify type of weights and return type
+    def set_weights(self, weights):  # TODO: Specify type of weights and return type
         state_dict = OrderedDict(
             {k: torch.tensor(v) for k, v in zip(self.state_dict().keys(), weights)}
         )
         self.load_state_dict(state_dict, strict=True)
 
-    def get_weights(self) -> NDArrays:  # TODO: Specify return type
+    def get_weights(self):  # TODO: Specify return type
         return [val.cpu().numpy() for _, val in self.state_dict().items()]
 
 
@@ -222,11 +221,47 @@ class TimeSeriesBERTModelForTraining(nn.Module):
         distribution_module(self.output_layer.weight)
         self.tsb_model.init_weights(distribution_module)
 
-    def set_weights(self, weights: NDArrays):  # TODO: Specify type of weights and return type
+    def set_weights(self, weights):  # TODO: Specify type of weights and return type
         state_dict = OrderedDict(
             {k: torch.tensor(v) for k, v in zip(self.state_dict().keys(), weights)}
         )
         self.load_state_dict(state_dict, strict=True)
 
-    def get_weights(self) -> NDArrays:  # TODO: Specify return type
+    def get_weights(self):  # TODO: Specify return type
         return [val.cpu().numpy() for _, val in self.state_dict().items()]
+
+class TimeSeriesBERTLoss(nn.Module):
+    """
+    TimeSeriesBERTLoss
+    ---------------
+
+    Loss = (k / epoch_num) * loss_reconstruct + masked_ts_loss
+    loss_reconstruct = MSE(predicted series, true series)
+    masked_ts_loss = RMSE(predicted masked values, true masked values)
+
+    In Train:
+    returns Loss
+    In Valid/Test:
+    returns masked_ts_loss
+    """
+
+    def __init__(self, k=None):
+        super().__init__()
+
+        self.k = k
+        self.mse_loss = nn.MSELoss(reduction="mean")
+
+    def forward(self, y_pred: torch.Tensor, y_true: torch.Tensor, mask: torch.BoolTensor, epoch=None):
+        masked_pred = torch.masked_select(y_pred, mask)
+        masked_true = torch.masked_select(y_true, mask)
+
+        masked_ts_loss = torch.sqrt(self.mse_loss(masked_pred, masked_true))
+
+        if epoch is not None:
+            loss_reconstruct = self.mse_loss(y_pred, y_true)
+
+            loss = masked_ts_loss + (self.k / epoch) * loss_reconstruct  # k = 10
+
+            return loss, masked_pred, masked_true
+
+        return masked_ts_loss, masked_pred, masked_true
